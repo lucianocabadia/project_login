@@ -1,0 +1,72 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id        String      @id @default(uuid())
+  name      String
+  users     User[]
+  loginLogs LoginLog[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  name         String
+  passwordHash String        @map("password_hash")
+  role         UserRole
+  company      Company       @relation(fields: [companyId], references: [id])
+  companyId    String        @map("company_id")
+  loginLogs    LoginLog[]
+  accessTokens AccessToken[]
+
+  @@map("users")
+}
+
+model LoginLog {
+  id        String    @id @default(uuid())
+  user      User?     @relation(fields: [userId], references: [id])
+  userId    String?   @map("user_id")
+  email     String
+  company   Company   @relation(fields: [companyId], references: [id])
+  companyId String    @map("company_id")
+  timestamp DateTime  @default(now())
+  ip        String?
+  country   String?
+  city      String?
+  region    String?
+  status    LogStatus
+  reason    String?
+
+  @@map("login_logs")
+}
+
+model AccessToken {
+  id        String   @id @default(uuid())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    String   @map("user_id")
+  token     String
+  expiresAt DateTime @map("expires_at")
+
+  @@map("access_tokens")
+}
+
+enum UserRole {
+  admin
+  director
+  manager
+  driver
+  partner
+}
+
+enum LogStatus {
+  success
+  failed
+}
